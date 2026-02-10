@@ -2,21 +2,27 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import login from "../assets/login.png";
+import { useDispatch } from "react-redux";
+import { loginUser } from "../redux/slices/authslice"; // ADD THIS IMPORT
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (email && password) {
-      toast.success("Login successful! 👏");
-      navigate("/profile"); // redirect after login
-    } else {
-      toast.error("Please enter both email and password!");
-    }
+    dispatch(loginUser({ email, password }))
+      .unwrap()
+      .then(() => {
+        toast.success("Login successful!");
+        navigate("/"); // Redirect to home or dashboard
+      })
+      .catch((error) => {
+        toast.error(error?.message || "Login failed!");
+      });
   };
 
   return (
@@ -42,6 +48,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="Enter your email address"
+                required
               />
             </div>
 
@@ -53,6 +60,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="Enter your password"
+                required
               />
             </div>
 

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import register from "../assets/register.png";
+import { useDispatch } from "react-redux";
+import { registerUser } from "../redux/slices/authslice";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -9,33 +11,22 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const navigate = useNavigate(); // ✅ for redirection
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword) {
-      toast.error("All fields are required!");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match!");
-      return;
-    }
-
-    // Mock registration logic
-    console.log("Name:", name, "Email:", email, "Password:", password);
-    toast.success("Registration successful!");
-
-    // Clear fields
-    setName("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-
-    // ✅ Redirect to Profile page
-    navigate("/profile");
+    
+    dispatch(registerUser({ name, email, password }))
+      .unwrap()
+      .then(() => {
+        toast.success("Registration successful!");
+        navigate("/");
+      })
+      .catch((error) => {
+        toast.error(error?.message || "Registration failed!");
+      });
   };
 
   return (
@@ -48,7 +39,9 @@ const Register = () => {
               <h2 className="text-xl font-medium">Racoon</h2>
             </div>
 
-            <h2 className="text-2xl font-bold text-center mb-6">Create Account</h2>
+            <h2 className="text-2xl font-bold text-center mb-6">
+              Create Account
+            </h2>
 
             {/* Name */}
             <input
@@ -57,6 +50,7 @@ const Register = () => {
               onChange={(e) => setName(e.target.value)}
               className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Name"
+              required
             />
 
             {/* Email */}
@@ -66,6 +60,7 @@ const Register = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Email"
+              required
             />
 
             {/* Password */}
@@ -75,6 +70,7 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Password"
+              required
             />
 
             {/* Confirm Password */}
@@ -84,6 +80,7 @@ const Register = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Confirm Password"
+              required
             />
 
             {/* Submit */}
