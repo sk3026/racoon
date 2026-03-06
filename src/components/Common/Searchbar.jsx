@@ -1,15 +1,44 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
 import { HiMagnifyingGlass, HiMiniXMark } from "react-icons/hi2";
 
+import { setFilter, fetchProductsByFilters } from "../../redux/slices/productslice";
+
 const Searchbar = () => {
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleSearchToggle = () => {
     setIsOpen(!isOpen);
   };
 
+  const handleSearch = (e) => {
+
+    e.preventDefault();
+
+    if (!searchTerm.trim()) return;
+
+    /* update redux filter */
+    dispatch(setFilter({ search: searchTerm }));
+
+    /* fetch products */
+    dispatch(fetchProductsByFilters({ search: searchTerm }));
+
+    /* update url */
+    navigate(`/collection/all?search=${encodeURIComponent(searchTerm)}`);
+
+    setIsOpen(false);
+
+  };
+
   return (
+
     <div
       className={`flex items-center justify-center w-full transition-all duration-300 ${
         isOpen
@@ -17,10 +46,16 @@ const Searchbar = () => {
           : "w-auto"
       }`}
     >
+
       {isOpen ? (
-        <form className="relative flex items-center justify-center w-full">
-          {/* Input Box */}
+
+        <form
+          onSubmit={handleSearch}
+          className="relative flex items-center justify-center w-full"
+        >
+
           <div className="relative w-1/2">
+
             <input
               type="text"
               placeholder="Search"
@@ -29,16 +64,15 @@ const Searchbar = () => {
               className="bg-gray-100 px-4 py-2 rounded-lg pr-12 focus:outline-none w-full placeholder:text-gray-500"
             />
 
-            {/* Search Button */}
             <button
               type="submit"
               className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800"
             >
               <HiMagnifyingGlass className="h-6 w-6" />
             </button>
+
           </div>
 
-          {/* Close Button */}
           <button
             type="button"
             onClick={handleSearchToggle}
@@ -46,13 +80,19 @@ const Searchbar = () => {
           >
             <HiMiniXMark className="h-6 w-6" />
           </button>
+
         </form>
+
       ) : (
+
         <button onClick={handleSearchToggle}>
           <HiMagnifyingGlass className="h-6 w-6 text-gray-600" />
         </button>
+
       )}
+
     </div>
+
   );
 };
 

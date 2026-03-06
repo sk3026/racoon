@@ -1,19 +1,47 @@
 import { useState, useEffect, useRef } from "react";
 import { FaFilter } from "react-icons/fa";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
 import ProductGrid from "../components/Product/ProductGrid";
 import SortOption from "../components/Product/SortOption";
 import Filtersidebar from "../components/Product/Filtersidebar";
 
+import { fetchProductsByFilters } from "../redux/slices/productslice";
+
 const Collectionpage = () => {
-  const [products, setProducts] = useState([]);
+
+  const { collection } = useParams();
+  const [searchParams] = useSearchParams();
+  const dispatch = useDispatch();
+
+  const { products, loading, error } =
+    useSelector((state) => state.products);
+
+  const queryParams = Object.fromEntries([...searchParams]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
-
-  // Close sidebar on outside click (mobile/tablet only)
   useEffect(() => {
+
+    const filters = { ...queryParams };
+
+    if (collection && collection !== "all") {
+      filters.collection = collection;
+    }
+
+    dispatch(fetchProductsByFilters(filters));
+
+  }, [dispatch, collection, searchParams]);
+
+  const toggleSidebar = () =>
+    setIsSidebarOpen((prev) => !prev);
+
+  useEffect(() => {
+
     const handleClickOutside = (event) => {
+
       if (
         window.innerWidth < 1024 &&
         sidebarRef.current &&
@@ -21,33 +49,24 @@ const Collectionpage = () => {
       ) {
         setIsSidebarOpen(false);
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
-  // Simulate API fetch
-  useEffect(() => {
-    setTimeout(() => {
-      const fetchedProducts = Array.from({ length: 8 }, (_, i) => ({
-        _id: String(i + 1),
-        name: "Stylish Jacket",
-        price: 120,
-        images: {
-          url: `https://picsum.photos/500/500?random=${i + 1}`,
-          altText: "Stylish Jacket",
-        },
-      }));
-      setProducts(fetchedProducts);
-    }, 1000);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+
   }, []);
 
   return (
-    <div className="flex flex-col lg:flex-row relative">
-      {/* Filter button for mobile */}
+
+    <div className="flex flex-col lg:flex-row">
+
+      {/* Mobile Filter Button */}
       <button
         onClick={toggleSidebar}
-        className="lg:hidden border p-2 flex justify-center items-center bg-gray-100 rounded-md shadow mb-4"
+        className="lg:hidden border p-2 flex items-center bg-gray-100 rounded-md m-4"
       >
         <FaFilter className="mr-2" />
         Filter
@@ -56,26 +75,42 @@ const Collectionpage = () => {
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-50
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:static lg:translate-x-0 lg:block`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white shadow transform transition-transform
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:static lg:translate-x-0`}
       >
-        <div className="p-4 border-b font-bold text-lg">Filters</div>
+
+        <div className="p-4 border-b font-bold">
+          Filters
+        </div>
+
         <div className="p-4">
           <Filtersidebar />
         </div>
+
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">All Collection</h2>
+      <div className="flex-1 p-6">
+
+        <div className="flex justify-between items-center mb-6">
+
+          <h2 className="text-2xl font-semibold capitalize">
+            {collection === "all" ? "All Products" : collection}
+          </h2>
+
           <SortOption />
+
         </div>
 
-        {/* Products grid */}
-        <ProductGrid products={products} />
+        <ProductGrid
+          products={products}
+          loading={loading}
+          error={error}
+        />
+
       </div>
+
     </div>
   );
 };

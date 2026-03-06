@@ -9,22 +9,24 @@ const authHeader = () => ({
   },
 });
 
-// ================= FETCH ALL ORDERS =================
+/* ================= FETCH ORDERS ================= */
+
 export const fetchAdminOrders = createAsyncThunk(
-  "adminOrders/fetchAllOrders",
+  "adminOrders/fetchAdminOrders",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(API_URL, authHeader());
-      return response.data;
+      return response.data; 
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || "Failed to fetch orders"
+        error.response?.data?.msg || "Failed to fetch orders"
       );
     }
   }
 );
 
-// ================= UPDATE ORDER STATUS =================
+/* ================= UPDATE ORDER ================= */
+
 export const updateOrderStatus = createAsyncThunk(
   "adminOrders/updateOrderStatus",
   async ({ id, status }, { rejectWithValue }) => {
@@ -37,69 +39,75 @@ export const updateOrderStatus = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || "Failed to update order status"
+        error.response?.data?.msg || "Failed to update order"
       );
     }
   }
 );
 
-// ================= DELETE ORDER =================
+/* ================= DELETE ORDER ================= */
+
 export const deleteOrder = createAsyncThunk(
   "adminOrders/deleteOrder",
   async (id, { rejectWithValue }) => {
     try {
       await axios.delete(`${API_URL}/${id}`, authHeader());
-      return id; // return deleted id for filtering
+      return id;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || "Failed to delete order"
+        error.response?.data?.msg || "Failed to delete order"
       );
     }
   }
 );
 
-// ================= SLICE =================
+/* ================= SLICE ================= */
+
 const adminOrdersSlice = createSlice({
   name: "adminOrders",
+
   initialState: {
     orders: [],
-    loading: false,
-    totalSales: 0,
     totalOrders: 0,
+    totalSales: 0,
+    loading: false,
     error: null,
   },
+
   reducers: {},
+
   extraReducers: (builder) => {
     builder
 
-      // FETCH
+      /* FETCH ORDERS */
+
       .addCase(fetchAdminOrders.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+
       .addCase(fetchAdminOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
 
-        state.totalOrders = action.payload.length;
-        state.totalSales = action.payload.reduce(
+        // backend returns { orders, page, pages, totalOrders }
+
+        state.orders = action.payload.orders;
+        state.totalOrders = action.payload.totalOrders;
+
+        state.totalSales = action.payload.orders.reduce(
           (acc, order) => acc + order.totalPrice,
           0
         );
       })
+
       .addCase(fetchAdminOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      // UPDATE STATUS
-      .addCase(updateOrderStatus.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        state.loading = false;
+      /* UPDATE ORDER */
 
+      .addCase(updateOrderStatus.fulfilled, (state, action) => {
         const index = state.orders.findIndex(
           (order) => order._id === action.payload._id
         );
@@ -108,32 +116,20 @@ const adminOrdersSlice = createSlice({
           state.orders[index] = action.payload;
         }
       })
-      .addCase(updateOrderStatus.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
 
-      // DELETE
-      .addCase(deleteOrder.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      /* DELETE ORDER */
+
       .addCase(deleteOrder.fulfilled, (state, action) => {
-        state.loading = false;
-
         state.orders = state.orders.filter(
           (order) => order._id !== action.payload
         );
 
         state.totalOrders = state.orders.length;
+
         state.totalSales = state.orders.reduce(
           (acc, order) => acc + order.totalPrice,
           0
         );
-      })
-      .addCase(deleteOrder.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
       });
   },
 });

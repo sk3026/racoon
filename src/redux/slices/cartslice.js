@@ -1,18 +1,21 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// ================= LOAD CART FROM LOCAL STORAGE =================
+/* ================= LOAD CART FROM LOCAL STORAGE ================= */
+
 const loadCartFromStorage = () => {
   const storedCart = localStorage.getItem("cart");
   return storedCart ? JSON.parse(storedCart) : [];
 };
 
-// ================= SAVE CART TO LOCAL STORAGE =================
+/* ================= SAVE CART TO LOCAL STORAGE ================= */
+
 const saveCartToStorage = (cart) => {
   localStorage.setItem("cart", JSON.stringify(cart));
 };
 
-// ================= FETCH CART =================
+/* ================= FETCH CART ================= */
+
 export const fetchCart = createAsyncThunk(
   "cart/fetchCart",
   async ({ userId, guestId }, { rejectWithValue }) => {
@@ -23,6 +26,7 @@ export const fetchCart = createAsyncThunk(
           params: { userId, guestId },
         }
       );
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -32,7 +36,8 @@ export const fetchCart = createAsyncThunk(
   }
 );
 
-// ================= ADD TO CART =================
+/* ================= ADD TO CART ================= */
+
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
   async (
@@ -41,7 +46,7 @@ export const addToCart = createAsyncThunk(
   ) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/add`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/cart`,
         {
           userId,
           guestId,
@@ -51,6 +56,7 @@ export const addToCart = createAsyncThunk(
           color,
         }
       );
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -60,7 +66,8 @@ export const addToCart = createAsyncThunk(
   }
 );
 
-// ================= UPDATE CART ITEM =================
+/* ================= UPDATE CART ITEM ================= */
+
 export const updateCartItemQuantity = createAsyncThunk(
   "cart/updateCartItemQuantity",
   async (
@@ -69,7 +76,7 @@ export const updateCartItemQuantity = createAsyncThunk(
   ) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/update`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/cart`,
         {
           userId,
           guestId,
@@ -79,6 +86,7 @@ export const updateCartItemQuantity = createAsyncThunk(
           color,
         }
       );
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -88,7 +96,8 @@ export const updateCartItemQuantity = createAsyncThunk(
   }
 );
 
-// ================= REMOVE FROM CART =================
+/* ================= REMOVE FROM CART ================= */
+
 export const removeFromCart = createAsyncThunk(
   "cart/removeFromCart",
   async (
@@ -97,11 +106,12 @@ export const removeFromCart = createAsyncThunk(
   ) => {
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/remove`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/cart`,
         {
           data: { userId, guestId, productId, size, color },
         }
       );
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -111,20 +121,22 @@ export const removeFromCart = createAsyncThunk(
   }
 );
 
-// ================= MERGE CART (Guest → User) =================
+/* ================= MERGE CART ================= */
+
 export const mergeCart = createAsyncThunk(
   "cart/mergeCart",
-  async ({ userId, guestId }, { rejectWithValue }) => {
+  async ({ guestId }, { rejectWithValue }) => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/cart/merge`,
-        { userId, guestId },
+        { guestId },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -134,7 +146,8 @@ export const mergeCart = createAsyncThunk(
   }
 );
 
-// ================= SLICE =================
+/* ================= SLICE ================= */
+
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
@@ -152,14 +165,15 @@ const cartSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-      // ===== FETCH CART =====
+
+      /* ===== FETCH CART ===== */
+
       .addCase(fetchCart.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.products || [];
         saveCartToStorage(state.items);
       })
       .addCase(fetchCart.rejected, (state, action) => {
@@ -167,14 +181,14 @@ const cartSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ===== ADD TO CART =====
+      /* ===== ADD TO CART ===== */
+
       .addCase(addToCart.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(addToCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.products || [];
         saveCartToStorage(state.items);
       })
       .addCase(addToCart.rejected, (state, action) => {
@@ -182,14 +196,14 @@ const cartSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ===== UPDATE ITEM =====
+      /* ===== UPDATE ITEM ===== */
+
       .addCase(updateCartItemQuantity.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(updateCartItemQuantity.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.products || [];
         saveCartToStorage(state.items);
       })
       .addCase(updateCartItemQuantity.rejected, (state, action) => {
@@ -197,14 +211,14 @@ const cartSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ===== REMOVE ITEM =====
+      /* ===== REMOVE ITEM ===== */
+
       .addCase(removeFromCart.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(removeFromCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.products || [];
         saveCartToStorage(state.items);
       })
       .addCase(removeFromCart.rejected, (state, action) => {
@@ -212,14 +226,14 @@ const cartSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ===== MERGE CART =====
+      /* ===== MERGE CART ===== */
+
       .addCase(mergeCart.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(mergeCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.products || [];
         saveCartToStorage(state.items);
       })
       .addCase(mergeCart.rejected, (state, action) => {
